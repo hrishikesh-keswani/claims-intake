@@ -21,7 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from claims.models import ClaimRecord, NotificationRequest, Policy
+from claims.models import NotificationRequest, Policy, RuleFailure
 from claims.policy_client import PolicyClient, PolicyNotFound
 from claims.repository import NotificationRepository
 
@@ -35,6 +35,9 @@ class ValidationOutcome:
     `detail` carries the values that produced the decision so that the person
     reading the eventual error can see which input was wrong.
 
+    `claim_reference` is set only after `submit_notification` records an accepted
+    notification (contract section 3). Individual rule functions leave it None.
+
     There is no status code here. Contract section 6 maps a code to a status, and
     that mapping is applied at the HTTP boundary.
     """
@@ -43,10 +46,11 @@ class ValidationOutcome:
     rule: str | None = None
     code: str | None = None
     detail: dict[str, Any] = field(default_factory=dict)
+    claim_reference: str | None = None
 
     @classmethod
-    def ok(cls) -> ValidationOutcome:
-        return cls(passed=True)
+    def ok(cls, claim_reference: str | None = None) -> ValidationOutcome:
+        return cls(passed=True, claim_reference=claim_reference)
 
     @classmethod
     def failed(cls, rule: str, code: str, **detail: Any) -> ValidationOutcome:
@@ -92,7 +96,19 @@ def evaluate_loss_after_inception(
     The boundary is stated in contract section 4.2 and in WI-0142 AC-3. A loss on
     the inception date is covered.
     """
-    raise NotImplementedError("Day 3 assignment")
+    return ValidationOutcome.failed("STUB", "STUB")
+
+
+def evaluate_policy_not_cancelled(
+    notification: NotificationRequest,
+    policy: Policy,
+) -> ValidationOutcome:
+    """V-7. The loss must fall before the cancellation date, if any.
+
+    Cancellation takes effect at the start of that date (WI-0158 AC-2). A null
+    cancellation_date means the policy was not cancelled (WI-0158 AC-3).
+    """
+    return ValidationOutcome.failed("STUB", "STUB")
 
 
 def evaluate_loss_before_expiry(
@@ -100,7 +116,7 @@ def evaluate_loss_before_expiry(
     policy: Policy,
 ) -> ValidationOutcome:
     """V-3. The loss must not fall after the policy expiry date."""
-    raise NotImplementedError("Day 3 assignment")
+    return ValidationOutcome.failed("STUB", "STUB")
 
 
 def evaluate_amount_within_limit(
@@ -111,7 +127,7 @@ def evaluate_amount_within_limit(
 
     An amount equal to the limit is within cover, per contract section 4.2.
     """
-    raise NotImplementedError("Day 3 assignment")
+    return ValidationOutcome.failed("STUB", "STUB")
 
 
 def evaluate_claim_type_covered(
@@ -119,33 +135,41 @@ def evaluate_claim_type_covered(
     policy: Policy,
 ) -> ValidationOutcome:
     """V-5. The claim type must be permitted on the policy's product."""
-    raise NotImplementedError("Day 3 assignment")
+    return ValidationOutcome.failed("STUB", "STUB")
+
+
+def evaluate_not_duplicate(
+    notification: NotificationRequest,
+    repository: NotificationRepository,
+) -> ValidationOutcome:
+    """V-6. No recorded notification matches this policy, loss date, and type.
+
+    Lives outside POLICY_RULES: it queries the repository, not a policy field.
+    """
+    return ValidationOutcome.failed("STUB", "STUB")
 
 
 def evaluate_notification(
     notification: NotificationRequest,
-    policy_client: PolicyClient,
-    repository: NotificationRepository,
-) -> ValidationOutcome:
-    """Evaluate every rule and return the outcome the caller sees.
+    policy: Policy,
+) -> RuleFailure | None:
+    """Evaluate the policy-field rules and return the first failure, if any.
 
-    A notification can violate several rules at once and the caller sees one
-    reason, so the order this function evaluates in is a caller-visible behavior.
-    It is fixed by contract section 4.1 and by nothing else. If you find yourself
-    choosing an order here, the contract is incomplete and the fix belongs there.
+    No I/O. Contract section 4.1 order among V-2, V-7, V-3, V-4, V-5. V-1 and V-6
+    are applied in submit_notification because they need the client and repository.
     """
-    raise NotImplementedError("Day 3 assignment")
+    return RuleFailure(rule_id="STUB", error_code="STUB")
 
 
 def submit_notification(
     notification: NotificationRequest,
     policy_client: PolicyClient,
     repository: NotificationRepository,
-) -> ClaimRecord | ValidationOutcome:
+) -> ValidationOutcome:
     """Validate, and record only if every rule passed.
 
     Nothing is written before the decision is made. A notification is either
     recorded with a claim reference or it does not exist, and there is no state in
     between for a later reader to interpret.
     """
-    raise NotImplementedError("Day 3 assignment")
+    return ValidationOutcome.failed("STUB", "STUB")
