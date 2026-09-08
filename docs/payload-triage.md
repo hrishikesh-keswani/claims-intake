@@ -135,3 +135,10 @@ Model-layer failures raise Pydantic `ValidationError`. They are not HTTP yet; Da
 **What was not a model code.** `POLICY_NOT_FOUND`, term/limit/product/cancellation failures, and `DUPLICATE_NOTIFICATION` are rule or repository outcomes. They already have rows in section 6. The models do not emit them.
 
 **Tests.** Parametrized unit tests for models (including every `fnol_invalid.json` and `fnol_edge.json` id, classified as malformed vs survives-to-rules) and repository (`record`, `allocate_claim_reference`, `find_matching`). Ruff and mypy clean.
+
+
+## Reconciliation addendum: repository feedback
+
+**What changed.** `record()` now accepts a `NotificationRequest`, not a `ClaimRecord`. A `ClaimRecord` exists only after a successful `record()`. The claim-reference year is `date.today().year` (the year of recording), not `loss_date.year`, matching contract section 3. Duplicate “two of three fields” coverage is three named parametrized cases. WI-0151 AC-3 is demonstrated by allocating a reference for INVALID-06 without recording it, then recording that same triple; `find_matching` is empty until the resubmission is stored.
+
+**Contract.** Section 3 already stated that `YYYY` is the year of recording. No contract amendment. The previous implementation contradicted the contract; the code was corrected.

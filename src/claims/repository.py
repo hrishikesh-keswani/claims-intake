@@ -10,9 +10,9 @@ lives here rather than in the rule table.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 
-from claims.models import ClaimRecord
+from claims.models import ClaimRecord, NotificationRequest
 
 
 class NotificationRepository:
@@ -22,26 +22,30 @@ class NotificationRepository:
         self._records: list[ClaimRecord] = []
         self._reference_sequences: dict[int, int] = {}
 
-    def allocate_claim_reference(self, year: int) -> str:
+    def allocate_claim_reference(self, year: int | None = None) -> str:
         """Issue the next unused `CLM-YYYY-NNNNNN` for `year`.
 
-        Contract section 3: unique, never reissued, zero-padded sequence.
-        YYYY is the calendar year of the loss (the year the handler quotes on
-        the FNOL). Sequence state is independent of `_records`, so a caller that
-        never `record`s cannot create a duplicate row (WI-0151 AC-3).
+        Contract section 3: `YYYY` is the calendar year in which the notification
+        is recorded, unique, never reissued, zero-padded sequence. Default `year`
+        is today so a caller cannot pass `loss_date.year` by accident.
+
+        Sequence state is independent of `_records`, so allocating a reference
+        without `record` cannot create a duplicate row (WI-0151 AC-3).
         """
+        if year is None:
+            year = datetime.now(tz=UTC).date().year
         self._reference_sequences[year] = self._reference_sequences.get(year, 0) + 1
         sequence = self._reference_sequences[year]
         return f"CLM-{year}-{sequence:06d}"
 
-    def record(self, notification: ClaimRecord) -> ClaimRecord:
-        """Persist an accepted notification and return it with its claim reference."""
+    def record(self, notification: NotificationRequest) -> ClaimRecord:
+        """Persist an accepted notification. This is the only way a ClaimRecord is created."""
         recorded = ClaimRecord(
             policy_number=notification.policy_number,
             loss_date=notification.loss_date,
             claim_type=notification.claim_type,
             estimated_amount=notification.estimated_amount,
-            claim_reference=self.allocate_claim_reference(notification.loss_date.year),
+            claim_reference=self.allocate_claim_reference(),
             status="recorded",
         )
         self._records.append(recorded)
