@@ -20,6 +20,5 @@ Engineering judgments made while building the Day 3 rule engine. Each entry name
 
 ## Gate observation (step 8)
 
-**What was configured.** `.github/workflows/checks.yaml` runs on `pull_request`, installs with `uv sync --frozen`, and runs `ruff check .`, `mypy`, and `pytest` as separate steps. None of those steps uses `continue-on-error` or `|| true`. A failing tool fails the job.
-
-**What was observed.** This session could not push `feature/day-3-rule-engine` to GitHub (`git push` failed: no credentials for `https://github.com`). So a live pull request was not opened here, and a deliberate failing commit was not pushed. Whether GitHub *blocks the merge button* is a repository setting (required status checks / branch protection), not something the workflow file can force. If a PR is opened from this branch and a failing check does not disable Merge, that is a finding about the repository configuration: required checks are not enabled on `main`. It should be reported rather than worked around in YAML.
+Pushed a commit that made pytest fail (`tests/unit/test_gate_probe.py`, `assert False`). The `checks` workflow failed: "checks / checks (pull_request) Failing after 16s." There were no merge conflicts.
+The Merge pull request button stayed enabled. A failing check did not block the merge. Required status checks are not configured on `main`. That is a repository-settings finding, not a defect in `checks.yaml`.
