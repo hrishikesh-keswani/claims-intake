@@ -226,7 +226,11 @@ def evaluate_notification(
         if not outcome.passed:
             if outcome.rule is None or outcome.code is None:
                 raise RuntimeError("a failed rule must name its identifier and code")
-            return RuleFailure(rule_id=outcome.rule, error_code=outcome.code)
+            return RuleFailure(
+                rule_id=outcome.rule,
+                error_code=outcome.code,
+                detail=outcome.detail,
+            )
     return None
 
 
@@ -269,7 +273,9 @@ def submit_notification(
     policy = _policy_from_record(record)
     failure = evaluate_notification(notification, policy)
     if failure is not None:
-        return ValidationOutcome.failed(failure.rule_id, failure.error_code)
+        return ValidationOutcome.failed(
+            failure.rule_id, failure.error_code, **failure.detail
+        )
     duplicate = evaluate_not_duplicate(notification, repository)
     if not duplicate.passed:
         return duplicate

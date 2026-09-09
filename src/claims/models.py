@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -70,6 +70,7 @@ class RuleFailure(BaseModel):
 
     rule_id: str
     error_code: str
+    detail: dict[str, Any] = Field(default_factory=dict)
 
 
 class ClaimRecord(BaseModel):
