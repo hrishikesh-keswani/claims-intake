@@ -166,9 +166,6 @@ async def malformed_request_handler(
 
 @app.exception_handler(Exception)
 async def internal_error_handler(_request: Request, exc: Exception) -> JSONResponse:
-    if isinstance(exc, PolicyLookupFailed):
-        code = LOOKUP_CODE_BY_REASON[exc.reason]
-        return error_envelope(code, message=MESSAGES[code], detail={})
     return error_envelope(
         "INTERNAL_ERROR",
         message=MESSAGES["INTERNAL_ERROR"],

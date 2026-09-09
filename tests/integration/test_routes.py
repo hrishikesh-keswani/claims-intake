@@ -183,6 +183,26 @@ class TestParseFailures:
         assert body["code"] == "MALFORMED_REQUEST"
         assert body["detail"] == {}
 
+    def test_claim_type_outside_vocabulary_returns_400(
+        self, client: TestClient
+    ) -> None:
+        response = _post(client, fnol_payload("EDGE-11"))
+        assert response.status_code == 400
+        body = response.json()
+        assert body["code"] == "MALFORMED_REQUEST"
+        assert body["detail"]["field"] == "claim_type"
+        assert body["detail"]["reason"] == "value_not_in_vocabulary"
+
+    def test_amount_with_three_decimals_returns_400(
+        self, client: TestClient
+    ) -> None:
+        response = _post(client, fnol_payload("EDGE-12"))
+        assert response.status_code == 400
+        body = response.json()
+        assert body["code"] == "MALFORMED_REQUEST"
+        assert body["detail"]["field"] == "estimated_amount"
+        assert body["detail"]["reason"] == "wrong_type_or_format"
+
 
 class TestDependencyFailures:
     @pytest.mark.parametrize(
